@@ -45,6 +45,8 @@
         @keyframes colorCycle { to { background-position: -300%; } }
         .header p { font-size: clamp(1rem, 3vw, 1.2rem); opacity: 0.8; margin-top: 0.5rem; }
         .navbar { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1.5rem; padding: 1rem; background: var(--card-color); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--primary-color); box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2); }
+        #search-input { padding: 0.5rem 1rem; border-radius: 20px; border: none; background: rgba(255,255,255,0.1); color: var(--text-color); outline: none; }
+        #search-input::placeholder { color: rgba(255,255,255,0.7); }
         .nav-link { color: var(--text-color); text-decoration: none; font-size: 1.1rem; padding: 0.5rem 1rem; border-radius: 5px; transition: all 0.3s ease; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
         .nav-link:hover, .nav-link:focus { background-color: var(--primary-color); color: var(--background-color); transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0, 229, 255, 0.4); }
         .nav-item.hidden { display: none; }
@@ -339,6 +341,7 @@
             <a class="nav-link nav-item" id="auth-link" onclick="showPage('page-login')"><i class="fas fa-sign-in-alt"></i> Connexion</a>
             <a class="nav-link nav-item hidden" id="espace-link" onclick="showPage('page-espace')"><i class="fas fa-user-circle"></i> Mon Espace</a>
             <a class="nav-link nav-item hidden" id="admin-link" onclick="showPage('page-admin')"><i class="fas fa-user-shield"></i> Admin</a>
+            <input type="text" id="search-input" placeholder="Rechercher un cours..." oninput="searchCourses(this.value)">
             <a class="nav-link nav-item" id="focus-mode-toggle"><i class="fas fa-eye"></i><span>Focus</span></a>
             <a class="nav-link nav-item hidden" id="logout-link"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </nav>
@@ -417,6 +420,16 @@
                  <section class="resource-category" data-aos="fade-up"><h2><i class="fas fa-book-open"></i> Cours</h2>
                     <div class="resource-list" id="maths-cours-list">
                         </div>
+                </section>
+            </main>
+        </div>
+
+        <div id="page-search" class="page-view">
+            <header class="subject-header"><h1><i class="fas fa-search"></i>Recherche</h1></header>
+            <main class="content-container">
+                <section class="resource-category" data-aos="fade-up">
+                    <h2>Résultats</h2>
+                    <div class="resource-list" id="search-results"></div>
                 </section>
             </main>
         </div>
@@ -747,8 +760,25 @@
                 return allCoursesCache;
             } catch (error) {
                 console.error("Erreur critique lors de la récupération des cours:", error);
-                return []; 
+                return [];
             }
+        }
+
+        async function searchCourses(query) {
+            query = query.trim().toLowerCase();
+            if (!query) {
+                showPage('page-accueil');
+                return;
+            }
+            const resultsContainer = document.getElementById('search-results');
+            const courses = await getAllCourses();
+            const results = courses.filter(c => c.title.toLowerCase().includes(query));
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>Aucun cours trouvé.</p>';
+            } else {
+                resultsContainer.innerHTML = results.map(c => `<a class="resource-item" href="${c.url}" target="_blank"><i class="fas fa-file-pdf"></i> ${c.title} <span>(${c.subject})</span></a>`).join('');
+            }
+            showPage('page-search');
         }
 
         async function updateProgressDashboard(userProgress, allCourses) {
